@@ -20,5 +20,6 @@ pkgs.mkShell {
     haskellPackages.spago
     easy-ps.purs-tidy
     nodePackages.purescript-language-server
+    nodejs-slim
   ];
 }
