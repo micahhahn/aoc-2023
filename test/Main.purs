@@ -3,8 +3,8 @@ module Test.Main where
 import Prelude
 
 import Challenge (Challenge)
-import Data.Traversable (traverse_)
 import Data.String (joinWith)
+import Data.Traversable (traverse_)
 import Day1 as Day1
 import Effect (Effect)
 import Effect.Aff (launchAff_)
@@ -16,6 +16,7 @@ import Test.Spec.Runner (runSpec)
 challenges :: Array Challenge
 challenges =
   [ Day1.challenge1
+  , Day1.challenge2
   ]
 
 main :: Effect Unit
