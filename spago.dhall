@@ -12,13 +12,16 @@ to generate this file without the comments in this block.
 -}
 { name = "aoc-2023"
 , dependencies =
-  [ "console"
+  [ "aff"
+  , "console"
   , "effect"
   , "foldable-traversable"
   , "maybe"
   , "node-buffer"
   , "node-fs"
   , "prelude"
+  , "spec"
+  , "strings"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
