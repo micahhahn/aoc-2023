@@ -21,7 +21,7 @@ challenges =
 main :: Effect Unit
 main = launchAff_ $ runSpec [ consoleReporter ] do
   describe "Challenge Unit Tests" do
-    it "Should succeed" do
+    it "Should pass examples" do
       traverse_
         ( \challenge ->
             challenge.solver (joinWith "\n" challenge.examplePrompt) `shouldEqual` challenge.exampleAnswer

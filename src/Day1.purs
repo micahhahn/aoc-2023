@@ -22,7 +22,7 @@ challenge1 =
       ]
   , exampleAnswer: "142"
   , solver: solution1
-  , solution: Nothing
+  , solution: Just "54916"
   }
 
 parseLine :: String -> Int
