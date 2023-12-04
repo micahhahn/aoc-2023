@@ -12,9 +12,7 @@ import Data.Either (Either(..))
 import Data.Foldable (foldl, sum)
 import Data.Filterable (filterMap)
 import Data.Int as Int
-import Data.List (List)
-import Data.Array (filter)
-import Data.List (all)
+import Data.List (List, all)
 import Data.List.Types (toList)
 import Data.Maybe (Maybe(..))
 import Data.String as String
@@ -34,7 +32,7 @@ challenge1 =
   , exampleAnswer: "8"
   , solver: solution1
   , promptPath: "assets/day2.txt"
-  , solution: Nothing
+  , solution: Just "2162"
   }
 
 type Set =
@@ -96,8 +94,6 @@ game = do
 gameCheck :: Game -> Boolean
 gameCheck { sets } =
   all (\set -> set.red <= 12 && set.green <= 13 && set.blue <= 14) sets
-
-x = map (runParser game) challenge1.examplePrompt
 
 solution1 :: String -> String
 solution1 input =
