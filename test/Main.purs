@@ -3,24 +3,26 @@ module Test.Main where
 import Prelude
 
 import Challenge (Challenge)
+import Data.Maybe (Maybe(..))
 import Data.String (joinWith)
 import Data.Traversable (traverse_)
 import Day1 as Day1
+import Day2 as Day2
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Node.Encoding (Encoding(..))
+import Node.FS.Sync (readTextFile)
 import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
-import Data.Maybe (Maybe(..))
-import Node.Encoding (Encoding(..))
-import Node.FS.Sync (readTextFile)
 
 challenges :: Array Challenge
 challenges =
   [ Day1.challenge1
   , Day1.challenge2
+  , Day2.challenge1
   ]
 
 main :: Effect Unit
