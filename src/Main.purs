@@ -15,6 +15,7 @@ import Node.FS.Sync (readTextFile)
 challenges :: Array { challenge :: Challenge, path :: String }
 challenges =
   [ { challenge: Day1.challenge1, path: "assets/day1.txt" }
+  , { challenge: Day1.challenge2, path: "assets/day1.txt" }
   ]
 
 main :: Effect (Unit)
