@@ -129,11 +129,11 @@ challenge2 =
   , exampleAnswer: "2286"
   , solver: solution2
   , promptPath: "assets/day2.txt"
-  , solution: Nothing
+  , solution: Just "72513"
   }
 
 gameMin :: Game -> Int
-gameMin game =
+gameMin g =
   let
     minSet =
       foldl
@@ -144,7 +144,7 @@ gameMin game =
             }
         )
         { red: 0, green: 0, blue: 0 }
-        game.sets
+        g.sets
 
   in
     minSet.red * minSet.green * minSet.blue
