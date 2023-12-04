@@ -35,41 +35,37 @@ challenge1 =
   , solution: Just "54916"
   }
 
-parseLine :: String -> Int
-parseLine line =
-  let
-    maybeResult =
-      foldl
-        ( \maybeAccum char ->
-            if char >= '0' && char <= '9' then
-              case maybeAccum of
-                Nothing ->
-                  Just { first: char, last: char }
-                Just accum ->
-                  Just (accum { last = char })
-            else maybeAccum
-        )
-        Nothing
-        (toCharArray line)
-  in
-    case maybeResult of
-      Nothing ->
-        0
+digit :: Parser Int
+digit =
+  satisfy (\c -> c >= '0' && c <= '9')
+    <#> (\c -> toCharCode c - toCharCode '0')
 
-      Just { first, last } ->
-        case Int.fromString (fromCharArray [ first, last ]) of
-          Nothing ->
+parser1 :: Parser (List (Maybe Int))
+parser1 =
+  many ((digit <#> Just) <|> (anyChar *> pure Nothing))
+
+parseLine :: Parser (List (Maybe Int)) -> String -> Int
+parseLine parser line =
+  case runParser parser line of
+    Left _ ->
+      0
+    Right maybeValues ->
+      let
+        values = List.catMaybes maybeValues
+      in
+        case List.head values /\ List.last values of
+          Just first /\ Just last ->
+            first * 10 + last
+
+          _ ->
             0
-
-          Just x ->
-            x
 
 solution1 :: String -> String
 solution1 input =
   let
     lines = String.split (String.Pattern "\n") input
   in
-    sum (map parseLine lines)
+    sum (map (parseLine parser1) lines)
       # Int.toStringAs Int.decimal
 
 challenge2 :: Challenge
@@ -89,14 +85,6 @@ challenge2 =
   , solution: Just "54728"
   }
 
-solution2 :: String -> String
-solution2 input =
-  let
-    lines = String.split (String.Pattern "\n") input
-  in
-    sum (map parseLine2 lines)
-      # Int.toStringAs Int.decimal
-
 numbers :: Array (Parser Int)
 numbers =
   [ lookAhead (string "one") *> anyChar *> pure 1
@@ -111,27 +99,14 @@ numbers =
   , digit
   ]
 
-digit :: Parser Int
-digit =
-  satisfy (\c -> c >= '0' && c <= '9')
-    <#> (\c -> toCharCode c - toCharCode '0')
-
 parser2 :: Parser (List (Maybe Int))
 parser2 =
   many ((choice numbers <#> Just) <|> (anyChar *> pure Nothing))
 
-parseLine2 :: String -> Int
-parseLine2 line =
-  case runParser parser2 line of
-    Left _ ->
-      0
-    Right maybeValues ->
-      let
-        values = List.catMaybes maybeValues
-      in
-        case List.head values /\ List.last values of
-          Just first /\ Just last ->
-            first * 10 + last
-
-          _ ->
-            0
+solution2 :: String -> String
+solution2 input =
+  let
+    lines = String.split (String.Pattern "\n") input
+  in
+    sum (map (parseLine parser2) lines)
+      # Int.toStringAs Int.decimal
