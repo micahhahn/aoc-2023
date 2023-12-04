@@ -10,16 +10,16 @@ import Control.Alt ((<|>))
 import Data.Char (toCharCode)
 import Data.Either (Either(..))
 import Data.Foldable (foldl, sum)
+import Data.Int as Int
 import Data.List (List)
 import Data.List as List
-import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple.Nested ((/\))
 import Text.Parsing.StringParser (Parser, runParser)
 import Text.Parsing.StringParser.CodePoints (anyChar, satisfy, string)
-import Text.Parsing.StringParser.Combinators (choice, many)
+import Text.Parsing.StringParser.Combinators (choice, lookAhead, many)
 
 challenge1 :: Challenge
 challenge1 =
@@ -97,16 +97,15 @@ solution2 input =
 
 numbers :: Array (Parser Int)
 numbers =
-  [ string "zero" *> pure 0
-  , string "one" *> pure 1
-  , string "two" *> pure 2
-  , string "three" *> pure 3
-  , string "four" *> pure 4
-  , string "five" *> pure 5
-  , string "six" *> pure 6
-  , string "seven" *> pure 7
-  , string "eight" *> pure 8
-  , string "nine" *> pure 9
+  [ lookAhead (string "one") *> anyChar *> pure 1
+  , lookAhead (string "two") *> anyChar *> pure 2
+  , lookAhead (string "three") *> anyChar *> pure 3
+  , lookAhead (string "four") *> anyChar *> pure 4
+  , lookAhead (string "five") *> anyChar *> pure 5
+  , lookAhead (string "six") *> anyChar *> pure 6
+  , lookAhead (string "seven") *> anyChar *> pure 7
+  , lookAhead (string "eight") *> anyChar *> pure 8
+  , lookAhead (string "nine") *> anyChar *> pure 9
   , digit
   ]
 
