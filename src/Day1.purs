@@ -9,13 +9,12 @@ import Challenge (Challenge)
 import Control.Alt ((<|>))
 import Data.Char (toCharCode)
 import Data.Either (Either(..))
-import Data.Foldable (foldl, sum)
+import Data.Foldable (sum)
 import Data.Int as Int
 import Data.List (List)
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.String as String
-import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Tuple.Nested ((/\))
 import Text.Parsing.StringParser (Parser, runParser)
 import Text.Parsing.StringParser.CodePoints (anyChar, satisfy, string)
