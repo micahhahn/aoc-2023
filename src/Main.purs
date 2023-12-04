@@ -12,17 +12,17 @@ import Effect.Console (log)
 import Node.Encoding (Encoding(..))
 import Node.FS.Sync (readTextFile)
 
-challenges :: Array { challenge :: Challenge, path :: String }
+challenges :: Array Challenge
 challenges =
-  [ { challenge: Day1.challenge1, path: "assets/day1.txt" }
-  , { challenge: Day1.challenge2, path: "assets/day1.txt" }
+  [ Day1.challenge1
+  , Day1.challenge2
   ]
 
 main :: Effect (Unit)
 main =
   traverse_
-    ( \x -> do
-        input <- readTextFile UTF8 x.path
-        log (x.challenge.solver input)
+    ( \challenge -> do
+        input <- readTextFile UTF8 challenge.promptPath
+        log $ challenge.solver input
     )
     challenges

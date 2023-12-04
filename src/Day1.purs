@@ -31,6 +31,7 @@ challenge1 =
       ]
   , exampleAnswer: "142"
   , solver: solution1
+  , promptPath: "assets/day1.txt"
   , solution: Just "54916"
   }
 
@@ -84,6 +85,7 @@ challenge2 =
       ]
   , exampleAnswer: "281"
   , solver: solution2
+  , promptPath: "assets/day1.txt"
   , solution: Just "54728"
   }
 

@@ -6,5 +6,6 @@ type Challenge =
   { examplePrompt :: Array String
   , exampleAnswer :: String
   , solver :: String -> String
+  , promptPath :: String
   , solution :: Maybe String
   }
