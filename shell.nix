@@ -6,8 +6,8 @@ let
     (pkgs.fetchFromGitHub {
       owner = "justinwoo";
       repo = "easy-purescript-nix";
-      rev = "5716cd791c999b3246b4fe173276b42c50afdd8d";
-      sha256 = "1r9lx4xhr42znmwb2x2pzah920klbjbjcivp2f0pnka7djvd2adq";
+      rev = "4b3e2613a8deba9bf3ed4724ffcea85802af69d8";
+      sha256 = null;
     }) {
     inherit pkgs;
   };
@@ -15,7 +15,7 @@ in with nixpkgs;
 
 pkgs.mkShell { 
   buildInputs = [ 
-    easy-ps.purs-0_14_4
+    easy-ps.purs-0_15_8
     easy-ps.psc-package
     haskellPackages.spago
     easy-ps.purs-tidy
