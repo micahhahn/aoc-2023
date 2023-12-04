@@ -12,9 +12,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Text.Parsing.Parser (Parser, position)
-import Text.Parsing.Parser.Pos (Position(..))
-import Text.Parsing.Parser.String (oneOf, anyChar)
+import Parser (Parser, Position(..), anyChar, oneOf, position)
 
 challenge1 :: Challenge
 challenge1 =
@@ -40,7 +38,7 @@ symbolParser :: Parser String (Tuple (Tuple Int Int) Char)
 symbolParser = do
   symbol <- oneOf [ '*', '#', '+', '$', '/', '&', '=', '@', '%' ]
   Position { line, column } <- position
-  pure (((line - 1) `Tuple` (column - 1)) `Tuple` symbol)
+  pure (((line - 1) `Tuple` (column - 2)) `Tuple` symbol)
 
 symbolMapParser :: Parser String (Map (Tuple Int Int) Char)
 symbolMapParser = do
