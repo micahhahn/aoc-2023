@@ -84,7 +84,7 @@ challenge2 =
       ]
   , exampleAnswer: "281"
   , solver: solution2
-  , solution: Nothing
+  , solution: Just "54728"
   }
 
 solution2 :: String -> String
