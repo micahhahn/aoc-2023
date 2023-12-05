@@ -5,14 +5,16 @@ module Day5
 import Prelude
 
 import Challenge (Challenge)
-import Data.Maybe (Maybe(..))
-import Parser (Parser, runParser, number, char, sepBy, newline, space, string, sepEndBy)
 import Data.Either (Either(..))
-import Data.String as String
+import Data.Foldable (minimum)
+import Data.Int as Int
 import Data.List (List)
+import Data.Maybe (Maybe(..))
 import Data.SortedArray (SortedArray)
-import Effect.Exception (error, throwException)
 import Data.SortedArray as SortedArray
+import Parser (Parser, runParser, number, sepBy, newline, space, string, sepEndBy)
+
+-- TODO: Are we overflowing? 
 
 challenge1 :: Challenge
 challenge1 =
@@ -63,7 +65,6 @@ seeds = do
   _ <- string "seeds: "
   number `sepBy` space
 
--- The order of fields is **very** carefully laid out so that we can binary search on `sourceStart` and `range`
 newtype IntervalMap =
   IntervalMap
     { sourceStart :: Int
@@ -72,9 +73,11 @@ newtype IntervalMap =
     }
 
 derive instance Eq IntervalMap
-derive instance Ord IntervalMap
+instance Ord IntervalMap where
+  compare (IntervalMap l) (IntervalMap r) =
+    compare l.sourceStart r.sourceStart
 
-instance Show IntervalMap where 
+instance Show IntervalMap where
   show (IntervalMap x) = "IntervalMap " <> show x
 
 intervalMap :: Parser String IntervalMap
@@ -125,11 +128,51 @@ almanac = do
   humidityToLocation <- categoryMap "humidity-to-location"
   pure { seeds: seeds', seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation }
 
+compareInterval :: Int -> IntervalMap -> Ordering
+compareInterval x (IntervalMap { sourceStart, range }) =
+  if x < sourceStart then
+    LT
+  else if x >= sourceStart + range then
+    GT
+  else
+    EQ
+
+withDefault :: forall a. a -> Maybe a -> a
+withDefault value maybe =
+  case maybe of
+    Nothing ->
+      value
+
+    Just x ->
+      x
+
+translateId :: CategoryMap -> Int -> Int
+translateId catMap id =
+  SortedArray.findIndexWith (compareInterval id) catMap
+    >>= (SortedArray.index catMap)
+    <#> (\(IntervalMap { sourceStart, targetStart }) -> (id - sourceStart) + targetStart)
+    # withDefault id
+
+seedToLocation :: Almanac -> Int -> Int
+seedToLocation { seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation } seedId =
+  seedId
+    # translateId seedToSoil
+    # translateId soilToFertilizer
+    # translateId fertilizerToWater
+    # translateId waterToLight
+    # translateId lightToTemperature
+    # translateId temperatureToHumidity
+    # translateId humidityToLocation
+
 solution1 :: String -> String
-solution1 input =  
-  case runParser input almanac of 
-    Left err -> 
+solution1 input =
+  case runParser input almanac of
+    Left err ->
       "Parsing challenge failed: " <> show err
 
-    Right almanac -> 
-      "Worked!"
+    Right almanac' ->
+      almanac'.seeds
+        # map (seedToLocation almanac')
+        # minimum
+        # withDefault 0
+        # Int.toStringAs Int.decimal
