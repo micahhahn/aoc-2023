@@ -37,7 +37,7 @@ challenge1 =
   , exampleAnswer: "4361"
   , solver: solution1
   , promptPath: "assets/day3.txt"
-  , solution: Nothing
+  , solution: Just "538046"
   }
 
 symbolParser :: Parser String (Tuple (Tuple Int Int) Char)
