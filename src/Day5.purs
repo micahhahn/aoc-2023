@@ -6,7 +6,13 @@ import Prelude
 
 import Challenge (Challenge)
 import Data.Maybe (Maybe(..))
-import Parser (Parser, number, char)
+import Parser (Parser, runParser, number, char, sepBy, newline, space, string, sepEndBy)
+import Data.Either (Either(..))
+import Data.String as String
+import Data.List (List)
+import Data.SortedArray (SortedArray)
+import Effect.Exception (error, throwException)
+import Data.SortedArray as SortedArray
 
 challenge1 :: Challenge
 challenge1 =
@@ -52,20 +58,78 @@ challenge1 =
   , solution: Nothing
   }
 
-type IntervalMap =
-  { targetStart :: Int
-  , sourceStart :: Int
-  , range :: Int
-  }
+seeds :: Parser String (List Int)
+seeds = do
+  _ <- string "seeds: "
+  number `sepBy` space
+
+-- The order of fields is **very** carefully laid out so that we can binary search on `sourceStart` and `range`
+newtype IntervalMap =
+  IntervalMap
+    { sourceStart :: Int
+    , range :: Int
+    , targetStart :: Int
+    }
+
+derive instance Eq IntervalMap
+derive instance Ord IntervalMap
+
+instance Show IntervalMap where 
+  show (IntervalMap x) = "IntervalMap " <> show x
 
 intervalMap :: Parser String IntervalMap
 intervalMap = do
   targetStart <- number
-  _ <- char ' '
+  _ <- space
   sourceStart <- number
-  _ <- char ' '
+  _ <- space
   range <- number
-  pure { targetStart, sourceStart, range }
+  pure $ IntervalMap { targetStart, sourceStart, range }
+
+type CategoryMap = SortedArray IntervalMap
+
+categoryMap :: String -> Parser String CategoryMap
+categoryMap categoryName = do
+  _ <- string categoryName
+  _ <- string " map:\n"
+  intervalMaps <- intervalMap `sepEndBy` newline
+  pure $ SortedArray.fromFoldable intervalMaps
+
+type Almanac =
+  { seeds :: List Int
+  , seedToSoil :: CategoryMap
+  , soilToFertilizer :: CategoryMap
+  , fertilizerToWater :: CategoryMap
+  , waterToLight :: CategoryMap
+  , lightToTemperature :: CategoryMap
+  , temperatureToHumidity :: CategoryMap
+  , humidityToLocation :: CategoryMap
+  }
+
+almanac :: Parser String Almanac
+almanac = do
+  seeds' <- seeds
+  _ <- newline *> newline
+  seedToSoil <- categoryMap "seed-to-soil"
+  _ <- newline
+  soilToFertilizer <- categoryMap "soil-to-fertilizer"
+  _ <- newline
+  fertilizerToWater <- categoryMap "fertilizer-to-water"
+  _ <- newline
+  waterToLight <- categoryMap "water-to-light"
+  _ <- newline
+  lightToTemperature <- categoryMap "light-to-temperature"
+  _ <- newline
+  temperatureToHumidity <- categoryMap "temperature-to-humidity"
+  _ <- newline
+  humidityToLocation <- categoryMap "humidity-to-location"
+  pure { seeds: seeds', seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation }
 
 solution1 :: String -> String
-solution1 = identity
+solution1 input =  
+  case runParser input almanac of 
+    Left err -> 
+      "Parsing challenge failed: " <> show err
+
+    Right almanac -> 
+      "Worked!"

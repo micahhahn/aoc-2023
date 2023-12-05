@@ -5,6 +5,8 @@ module Parser
   , module Parsing.String.Basic
   , anyDigit
   , number
+  , space
+  , newline
   ) where
 
 import Prelude
@@ -13,7 +15,7 @@ import Data.Char (toCharCode)
 import Data.Foldable (foldl)
 import Data.List.Types (toList)
 import Parsing (Parser, position, runParser, Position(..))
-import Parsing.Combinators (many, many1, choice, sepBy, sepBy1, lookAhead)
+import Parsing.Combinators (many, many1, choice, sepBy, sepBy1, lookAhead, try, sepEndBy)
 import Parsing.String (anyChar, satisfy, string, char)
 import Parsing.String.Basic (oneOf, whiteSpace)
 
@@ -27,3 +29,9 @@ number =
         toList digits
           # foldl (\accum c -> (toCharCode c - toCharCode '0') + accum * 10) 0
     )
+
+space :: Parser String Char
+space = char ' '
+
+newline :: Parser String Char
+newline = char '\n'
