@@ -8,12 +8,14 @@ import Prelude
 import Challenge (Challenge)
 import Control.Alt ((<|>))
 import Data.Either (Either(..))
-import Data.Foldable (sum, foldl)
+import Data.Filterable (filterMap)
+import Data.Foldable (sum, foldl, product)
 import Data.Int as Int
-import Data.List (catMaybes, many, List(..), (:))
+import Data.List (List(..), catMaybes, many, (:))
 import Data.List as List
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Parser (Parser, Position(..), anyChar, oneOf, position, number, runParser)
 
@@ -133,9 +135,44 @@ challenge2 =
   , solution: Nothing
   }
 
+symbolNeighbors :: SymbolPos -> List (Tuple Int Int)
+symbolNeighbors { line, col } =
+  Tuple (line - 1) (col - 1)
+    : Tuple (line - 1) col
+    : Tuple (line - 1) (col + 1)
+    : Tuple line (col + 1)
+    : Tuple (line + 1) (col + 1)
+    : Tuple (line + 1) col
+    : Tuple (line + 1) (col - 1)
+    : Tuple line (col - 1)
+    : Nil
+
 solution2 :: String -> String
 solution2 input =
   let
     { symbols, parts } = parseGrid input
+    partMap =
+      parts
+        # List.concatMap
+            ( \part ->
+                List.range part.startCol part.endCol
+                  # map (\col -> Tuple (Tuple part.line col) part.num)
+            )
+        # Map.fromFoldable
   in
-    ""
+    symbols
+      # List.filter (\s -> s.symbol == '*')
+      # filterMap
+          ( \s ->
+              let
+                uniqueParts = symbolNeighbors s
+                  # filterMap (\pos -> Map.lookup pos partMap)
+                  # Set.fromFoldable
+              in
+                if Set.size uniqueParts == 2 then
+                  Just (product uniqueParts)
+                else
+                  Nothing
+          )
+      # sum
+      # Int.toStringAs Int.decimal
