@@ -35,17 +35,17 @@ challenges =
 main :: Effect Unit
 main = launchAff_ $ runSpec [ consoleReporter ] do
   describe "Challenge Examples Tests" do
-    it "Should pass examples" do
-      traverse_
-        ( \challenge ->
+    traverse_
+      ( \challenge ->
+          it challenge.name do
             challenge.solver (joinWith "\n" challenge.examplePrompt) `shouldEqual` challenge.exampleAnswer
-        )
-        challenges
+      )
+      challenges
 
   describe "Challenge Golden Answer Tests" do
-    it "Should match golden answers" do
-      traverse_
-        ( \challenge ->
+    traverse_
+      ( \challenge ->
+          it challenge.name do
             case challenge.solution of
               Nothing ->
                 pure unit
@@ -53,5 +53,5 @@ main = launchAff_ $ runSpec [ consoleReporter ] do
                 input <- liftEffect $ readTextFile UTF8 challenge.promptPath
                 (challenge.solver input) `shouldEqual` answer
 
-        )
-        challenges
+      )
+      challenges
