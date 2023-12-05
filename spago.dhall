@@ -13,7 +13,6 @@ to generate this file without the comments in this block.
 { name = "aoc-2023"
 , dependencies =
   [ "aff"
-  , "arrays"
   , "console"
   , "control"
   , "effect"
@@ -29,7 +28,6 @@ to generate this file without the comments in this block.
   , "parsing"
   , "prelude"
   , "spec"
-  , "string-parsers"
   , "strings"
   , "tuples"
   ]

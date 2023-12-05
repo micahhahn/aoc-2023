@@ -1,21 +1,21 @@
 module Parser
-  ( module Text.Parsing.Parser
-  , module Text.Parsing.Parser.Pos
-  , module Text.Parsing.Parser.String
-  , module Text.Parsing.Parser.Combinators
+  ( module Parsing
+  , module Parsing.Combinators
+  , module Parsing.String
+  , module Parsing.String.Basic
   , anyDigit
   , number
   ) where
 
 import Prelude
 
-import Text.Parsing.Parser (Parser, position, runParser)
-import Text.Parsing.Parser.Combinators (many1)
+import Parsing (Parser, position, runParser, Position(..))
+import Parsing.Combinators (many, many1, choice, sepBy1, lookAhead)
 import Data.Char (toCharCode)
-import Text.Parsing.Parser.Pos (Position(..))
 import Data.Foldable (foldl)
 import Data.List.Types (toList)
-import Text.Parsing.Parser.String (anyChar, oneOf, satisfy)
+import Parsing.String (anyChar, satisfy, string, char)
+import Parsing.String.Basic (oneOf)
 
 anyDigit :: Parser String Char
 anyDigit = satisfy (\c -> c >= '0' && c <= '9')

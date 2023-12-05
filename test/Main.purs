@@ -8,6 +8,7 @@ import Data.String (joinWith)
 import Data.Traversable (traverse_)
 import Day1 as Day1
 import Day2 as Day2
+import Day3 as Day3
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -24,6 +25,7 @@ challenges =
   , Day1.challenge2
   , Day2.challenge1
   , Day2.challenge2
+  , Day3.challenge1
   ]
 
 main :: Effect Unit

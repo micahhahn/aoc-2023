@@ -16,9 +16,7 @@ import Data.List (List, all)
 import Data.List.Types (toList)
 import Data.Maybe (Maybe(..))
 import Data.String as String
-import Text.Parsing.StringParser (Parser, runParser)
-import Text.Parsing.StringParser.CodePoints (string, anyDigit, char)
-import Text.Parsing.StringParser.Combinators (many1, sepBy1)
+import Parser (Parser, runParser, string, anyDigit, char, many1, sepBy1)
 
 challenge1 :: Challenge
 challenge1 =
@@ -43,7 +41,7 @@ type Set =
 
 type Game = { gameId :: Int, sets :: List Set }
 
-number :: Parser Int
+number :: Parser String Int
 number = many1 anyDigit <#>
   ( \digits ->
       toList digits
@@ -55,20 +53,20 @@ data Color
   | Green
   | Blue
 
-color :: Parser Color
+color :: Parser String Color
 color =
   (string "red" *> pure Red)
     <|> (string "green" *> pure Green)
     <|> (string "blue" *> pure Blue)
 
-draw :: Parser { amount :: Int, color :: Color }
+draw :: Parser String { amount :: Int, color :: Color }
 draw = do
   amount <- number
   _ <- char ' '
   color_ <- color
   pure { amount: amount, color: color_ }
 
-set :: Parser Set
+set :: Parser String Set
 set = do
   sepBy1 draw (string ", ")
     <#> foldl
@@ -83,7 +81,7 @@ set = do
       )
       { red: 0, green: 0, blue: 0 }
 
-game :: Parser Game
+game :: Parser String Game
 game = do
   _ <- string "Game "
   gameId <- number
@@ -102,7 +100,7 @@ solution1 input =
 
     possibleGames =
       filterMap
-        ( \line -> case runParser game line of
+        ( \line -> case runParser line game of
             Left _ ->
               Nothing
             Right g ->
@@ -156,7 +154,7 @@ solution2 input =
   in
     map
       ( \line ->
-          case runParser game line of
+          case runParser line game of
             Left _ ->
               0
 

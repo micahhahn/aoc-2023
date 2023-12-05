@@ -16,9 +16,7 @@ import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
-import Text.Parsing.StringParser (Parser, runParser)
-import Text.Parsing.StringParser.CodePoints (anyChar, satisfy, string)
-import Text.Parsing.StringParser.Combinators (choice, lookAhead, many)
+import Parser (Parser, runParser, anyChar, satisfy, string, choice, lookAhead, many)
 
 challenge1 :: Challenge
 challenge1 =
@@ -34,18 +32,18 @@ challenge1 =
   , solution: Just "54916"
   }
 
-digit :: Parser Int
+digit :: Parser String Int
 digit =
   satisfy (\c -> c >= '0' && c <= '9')
     <#> (\c -> toCharCode c - toCharCode '0')
 
-parser1 :: Parser (List (Maybe Int))
+parser1 :: Parser String (List (Maybe Int))
 parser1 =
   many ((digit <#> Just) <|> (anyChar *> pure Nothing))
 
-parseLine :: Parser (List (Maybe Int)) -> String -> Int
+parseLine :: Parser String (List (Maybe Int)) -> String -> Int
 parseLine parser line =
-  case runParser parser line of
+  case runParser line parser of
     Left _ ->
       0
     Right maybeValues ->
@@ -84,7 +82,7 @@ challenge2 =
   , solution: Just "54728"
   }
 
-numbers :: Array (Parser Int)
+numbers :: Array (Parser String Int)
 numbers =
   [ lookAhead (string "one") *> anyChar *> pure 1
   , lookAhead (string "two") *> anyChar *> pure 2
@@ -98,7 +96,7 @@ numbers =
   , digit
   ]
 
-parser2 :: Parser (List (Maybe Int))
+parser2 :: Parser String (List (Maybe Int))
 parser2 =
   many ((choice numbers <#> Just) <|> (anyChar *> pure Nothing))
 
