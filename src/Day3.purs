@@ -1,7 +1,6 @@
 module Day3
   ( challenge1
-  , allNumberPos
-  , neighbors
+  , challenge2
   ) where
 
 import Prelude
@@ -9,48 +8,49 @@ import Prelude
 import Challenge (Challenge)
 import Control.Alt ((<|>))
 import Data.Either (Either(..))
-import Data.List (catMaybes, many, List, (:))
-import Data.Foldable (sum)
-import Data.List as List
+import Data.Foldable (sum, foldl)
 import Data.Int as Int
-import Data.Map (Map)
+import Data.List (catMaybes, many, List(..), (:))
+import Data.List as List
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
 import Parser (Parser, Position(..), anyChar, oneOf, position, number, runParser)
+
+examplePrompt :: Array String
+examplePrompt =
+  [ "467..114.."
+  , "...*......"
+  , "..35..633."
+  , "......#..."
+  , "617*......"
+  , ".....+.58."
+  , "..592....."
+  , "......755."
+  , "...$.*...."
+  , ".664.598.."
+  ]
 
 challenge1 :: Challenge
 challenge1 =
-  { examplePrompt:
-      [ "467..114.."
-      , "...*......"
-      , "..35..633."
-      , "......#..."
-      , "617*......"
-      , ".....+.58."
-      , "..592....."
-      , "......755."
-      , "...$.*...."
-      , ".664.598.."
-      ]
+  { examplePrompt: examplePrompt
   , exampleAnswer: "4361"
   , solver: solution1
   , promptPath: "assets/day3.txt"
   , solution: Just "538046"
   }
 
-symbolParser :: Parser String (Tuple (Tuple Int Int) Char)
-symbolParser = do
+type SymbolPos =
+  { line :: Int
+  , col :: Int
+  , symbol :: Char
+  }
+
+symbolPos :: Parser String SymbolPos
+symbolPos = do
   symbol <- oneOf [ '*', '#', '+', '$', '/', '&', '=', '@', '%', '-' ]
   Position { line, column } <- position
-  pure (((line - 1) `Tuple` (column - 2)) `Tuple` symbol)
-
-symbolMap :: Parser String (Map (Tuple Int Int) Char)
-symbolMap =
-  many ((symbolParser <#> Just) <|> (anyChar *> pure Nothing))
-    <#> catMaybes
-    <#> Map.fromFoldable
+  pure { line: (line - 1), col: (column - 2), symbol: symbol }
 
 type NumberPos =
   { line :: Int
@@ -66,10 +66,35 @@ numberPos = do
   Position endPosition <- position
   pure { line: startPosition.line - 1, startCol: startPosition.column - 1, endCol: endPosition.column - 2, num: num }
 
-allNumberPos :: Parser String (List NumberPos)
-allNumberPos = do
-  many ((numberPos <#> Just) <|> (anyChar *> pure Nothing))
+data Object
+  = Symbol SymbolPos
+  | PartNumber NumberPos
+
+grid :: Parser String (List Object)
+grid =
+  many
+    ( (symbolPos <#> Symbol >>> Just)
+        <|> (numberPos <#> PartNumber >>> Just)
+        <|> (anyChar *> pure Nothing)
+    )
     <#> catMaybes
+
+parseGrid :: String -> { symbols :: List SymbolPos, parts :: List NumberPos }
+parseGrid input =
+  case runParser input grid of
+    Right objects ->
+      foldl
+        ( \accum object ->
+            case object of
+              Symbol s ->
+                accum { symbols = s : accum.symbols }
+              PartNumber n ->
+                accum { parts = n : accum.parts }
+        )
+        { symbols: Nil, parts: Nil }
+        objects
+    Left _ ->
+      { symbols: Nil, parts: Nil }
 
 neighbors :: NumberPos -> List (Tuple Int Int)
 neighbors { line, startCol, endCol } =
@@ -82,17 +107,35 @@ neighbors { line, startCol, endCol } =
 
 solution1 :: String -> String
 solution1 input =
-  case runParser input symbolMap /\ runParser input allNumberPos of
-    Right symbols /\ Right numbers ->
-      numbers
-        # List.filter
-            ( \num ->
-                neighbors num
-                  # List.any (\neighbor -> Map.member neighbor symbols)
-            )
-        # map (\x -> x.num)
-        # sum
-        # Int.toStringAs Int.decimal
+  let
+    { symbols, parts } = parseGrid input
+    symbolMap =
+      symbols
+        # map (\s -> Tuple (Tuple s.line s.col) s.symbol)
+        # Map.fromFoldable
+  in
+    parts
+      # List.filter
+          ( \num ->
+              neighbors num
+                # List.any (\neighbor -> Map.member neighbor symbolMap)
+          )
+      # map (\x -> x.num)
+      # sum
+      # Int.toStringAs Int.decimal
 
-    _ ->
-      ""
+challenge2 :: Challenge
+challenge2 =
+  { examplePrompt: examplePrompt
+  , exampleAnswer: "467835"
+  , solver: solution2
+  , promptPath: "assets/day3.txt"
+  , solution: Nothing
+  }
+
+solution2 :: String -> String
+solution2 input =
+  let
+    { symbols, parts } = parseGrid input
+  in
+    ""
