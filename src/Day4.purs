@@ -55,11 +55,15 @@ parseInput input =
     Right x ->
       x
 
-scoreCard :: Card -> Int
-scoreCard { elfNumbers, winningNumbers } =
+cardWinners :: Card -> Int
+cardWinners { elfNumbers, winningNumbers } =
   elfNumbers
     # List.filter (\number -> Set.member number winningNumbers)
     # List.length
+
+scoreCard :: Card -> Int
+scoreCard c =
+  cardWinners c
     # \n -> Int.pow 2 (n - 1)
 
 solution1 :: String -> String
