@@ -185,28 +185,28 @@ infix 8 index as !!
 
 -- | Finds the first index of the first occurrence of the provided item. Uses binary search. 
 elemIndex ∷ ∀ a. Ord a ⇒ a → SortedArray a → Maybe Int
-elemIndex a = findIndex' Forward a
+elemIndex a = findIndex' Forward (compare a)
 
 -- | Finds the last index of the first occurrence of the provided item. Uses binary search. 
 elemLastIndex ∷ ∀ a. Ord a ⇒ a → SortedArray a → Maybe Int
-elemLastIndex a = findIndex' Backward a
+elemLastIndex a = findIndex' Backward (compare a)
 
 -- | Finds the first index for which the provided compare function tests equal (`EQ`).
 -- | Uses binary search.
 findIndex ∷ ∀ a. Ord a ⇒ a → SortedArray a → Maybe Int
-findIndex a = findIndex' Forward a
+findIndex a = findIndex' Forward (compare a)
 
 -- | Finds the last index for which the provided compare function tests equal (`EQ`).
 -- | Uses binary search.
 findLastIndex ∷ ∀ a. Ord a ⇒ a → SortedArray a → Maybe Int
-findLastIndex a = findIndex' Backward a
+findLastIndex a = findIndex' Backward (compare a)
 
-findIndex' ∷ ∀ a. Ord a ⇒ Direction → a → SortedArray a → Maybe Int
-findIndex' dir a sa = go 0 <<< length $ sa
+findIndexWith :: ∀ a. (a → Ordering) → SortedArray a → Maybe Int
+findIndexWith = findIndex' Forward
+
+findIndex' ∷ ∀ a. Direction → (a → Ordering) → SortedArray a → Maybe Int
+findIndex' dir f sa = go 0 <<< length $ sa
   where
-
-  f ∷ a → Ordering
-  f = compare a
 
   go ∷ Int → Int → Maybe Int
   go low high
