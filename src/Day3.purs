@@ -132,7 +132,7 @@ challenge2 =
   , exampleAnswer: "467835"
   , solver: solution2
   , promptPath: "assets/day3.txt"
-  , solution: Nothing
+  , solution: Just "81709807"
   }
 
 symbolNeighbors :: SymbolPos -> List (Tuple Int Int)
