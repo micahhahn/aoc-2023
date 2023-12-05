@@ -10,6 +10,7 @@ import Day1 as Day1
 import Day2 as Day2
 import Day3 as Day3
 import Day4 as Day4
+import Day5 as Day5
 import Effect (Effect)
 import Effect.Console (log)
 import Node.Encoding (Encoding(..))
@@ -25,6 +26,7 @@ challenges =
   , Day3.challenge2
   , Day4.challenge1
   , Day4.challenge2
+  , Day5.challenge1
   ]
 
 main :: Effect (Unit)
