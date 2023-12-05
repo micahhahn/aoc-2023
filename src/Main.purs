@@ -9,6 +9,7 @@ import Data.Traversable (traverse_)
 import Day1 as Day1
 import Day2 as Day2
 import Day3 as Day3
+import Day4 as Day4
 import Effect (Effect)
 import Effect.Console (log)
 import Node.Encoding (Encoding(..))
@@ -22,6 +23,7 @@ challenges =
   , Day2.challenge2
   , Day3.challenge1
   , Day3.challenge2
+  , Day4.challenge1
   ]
 
 main :: Effect (Unit)

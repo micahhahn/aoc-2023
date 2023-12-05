@@ -1,0 +1,70 @@
+module Day4
+  ( challenge1
+  , card
+  ) where
+
+import Prelude
+
+import Challenge (Challenge)
+import Data.Either (Either(..))
+import Data.List (List(..))
+import Data.List as List
+import Data.Maybe (Maybe(..))
+import Data.Set (Set)
+import Data.Foldable (sum)
+import Data.Int as Int
+import Data.Set as Set
+import Parser (Parser, char, number, runParser, sepBy, string, whiteSpace)
+
+challenge1 :: Challenge
+challenge1 =
+  { examplePrompt:
+      [ "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53"
+      , "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19"
+      , "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1"
+      , "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83"
+      , "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36"
+      , "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"
+      ]
+  , exampleAnswer: "13"
+  , solver: solution1
+  , promptPath: "assets/day4.txt"
+  , solution: Nothing
+  }
+
+type Card =
+  { winningNumbers :: Set Int
+  , elfNumbers :: List Int
+  }
+
+card :: Parser String Card
+card = do
+  _ <- string "Card "
+  _ <- whiteSpace *> number
+  _ <- string ": "
+  winning <- (whiteSpace *> number) `sepBy` (char ' ')
+  _ <- string " | "
+  elf <- (whiteSpace *> number) `sepBy` (char ' ')
+  pure { winningNumbers: Set.fromFoldable winning, elfNumbers: elf }
+
+parseInput :: String -> List Card
+parseInput input =
+  case runParser input (card `sepBy` (char '\n')) of
+    Left _ ->
+      Nil
+    Right x ->
+      x
+
+scoreCard :: Card -> Int
+scoreCard { elfNumbers, winningNumbers } =
+  elfNumbers
+    # List.filter (\number -> Set.member number winningNumbers)
+    # List.length
+    # \n -> Int.pow 2 (n - 1)
+
+solution1 :: String -> String
+solution1 input =
+  parseInput input
+    # map scoreCard
+    # sum
+    # Int.toStringAs Int.decimal
