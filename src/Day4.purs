@@ -29,7 +29,7 @@ challenge1 =
   , exampleAnswer: "13"
   , solver: solution1
   , promptPath: "assets/day4.txt"
-  , solution: Nothing
+  , solution: Just "25571"
   }
 
 type Card =
