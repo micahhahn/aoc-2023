@@ -20,7 +20,8 @@ import Parser (Parser, runParser, anyChar, satisfy, string, choice, lookAhead, m
 
 challenge1 :: Challenge
 challenge1 =
-  { examplePrompt:
+  { name: "Day 1 Part 1"
+  , examplePrompt:
       [ "1abc2"
       , "pqr3stu8vwx"
       , "a1b2c3d4e5f"
@@ -67,7 +68,8 @@ solution1 input =
 
 challenge2 :: Challenge
 challenge2 =
-  { examplePrompt:
+  { name: "Day 1 Part 2"
+  , examplePrompt:
       [ "two1nine"
       , "eightwothree"
       , "abcone2threexyz"

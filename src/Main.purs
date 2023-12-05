@@ -32,6 +32,6 @@ main =
   traverse_
     ( \challenge -> do
         input <- readTextFile UTF8 challenge.promptPath
-        log $ challenge.solver input
+        log $ challenge.name <> ": " <> challenge.solver input
     )
     challenges

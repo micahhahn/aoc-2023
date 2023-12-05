@@ -35,7 +35,8 @@ examplePrompt =
 
 challenge1 :: Challenge
 challenge1 =
-  { examplePrompt: examplePrompt
+  { name: "Day 3 Part 1"
+  , examplePrompt: examplePrompt
   , exampleAnswer: "4361"
   , solver: solution1
   , promptPath: "assets/day3.txt"
@@ -128,7 +129,8 @@ solution1 input =
 
 challenge2 :: Challenge
 challenge2 =
-  { examplePrompt: examplePrompt
+  { name: "Day 3 Part 2"
+  , examplePrompt: examplePrompt
   , exampleAnswer: "467835"
   , solver: solution2
   , promptPath: "assets/day3.txt"
