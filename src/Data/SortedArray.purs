@@ -37,6 +37,7 @@ module Data.SortedArray
   , elemIndex
   , elemLastIndex
   , findIndex
+  , findIndexWith
   , findLastIndex
   , delete
   , deleteAt
