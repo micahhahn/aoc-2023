@@ -15,8 +15,6 @@ import Data.SortedArray (SortedArray)
 import Data.SortedArray as SortedArray
 import Parser (Parser, runParser, sepBy, newline, space, string, sepEndBy, bigint)
 
--- TODO: Are we overflowing? 
-
 challenge1 :: Challenge
 challenge1 =
   { name: "Day 5 Part 1"
@@ -58,7 +56,7 @@ challenge1 =
   , exampleAnswer: "35"
   , solver: solution1
   , promptPath: "assets/day5.txt"
-  , solution: Nothing
+  , solution: Just "84470622"
   }
 
 seeds :: Parser String (List BigInt)
