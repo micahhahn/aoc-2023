@@ -21,6 +21,7 @@ to generate this file without the comments in this block.
   , "filterable"
   , "foldable-traversable"
   , "integers"
+  , "js-bigints"
   , "lists"
   , "maybe"
   , "node-buffer"

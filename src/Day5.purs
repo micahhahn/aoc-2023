@@ -7,12 +7,13 @@ import Prelude
 import Challenge (Challenge)
 import Data.Either (Either(..))
 import Data.Foldable (minimum)
-import Data.Int as Int
+import JS.BigInt (BigInt)
+import JS.BigInt as BigInt
 import Data.List (List)
 import Data.Maybe (Maybe(..))
 import Data.SortedArray (SortedArray)
 import Data.SortedArray as SortedArray
-import Parser (Parser, runParser, number, sepBy, newline, space, string, sepEndBy)
+import Parser (Parser, runParser, sepBy, newline, space, string, sepEndBy, bigint)
 
 -- TODO: Are we overflowing? 
 
@@ -60,16 +61,16 @@ challenge1 =
   , solution: Nothing
   }
 
-seeds :: Parser String (List Int)
+seeds :: Parser String (List BigInt)
 seeds = do
   _ <- string "seeds: "
-  number `sepBy` space
+  bigint `sepBy` space
 
 newtype IntervalMap =
   IntervalMap
-    { sourceStart :: Int
-    , range :: Int
-    , targetStart :: Int
+    { sourceStart :: BigInt
+    , range :: BigInt
+    , targetStart :: BigInt
     }
 
 derive instance Eq IntervalMap
@@ -82,11 +83,11 @@ instance Show IntervalMap where
 
 intervalMap :: Parser String IntervalMap
 intervalMap = do
-  targetStart <- number
+  targetStart <- bigint
   _ <- space
-  sourceStart <- number
+  sourceStart <- bigint
   _ <- space
-  range <- number
+  range <- bigint
   pure $ IntervalMap { targetStart, sourceStart, range }
 
 type CategoryMap = SortedArray IntervalMap
@@ -99,7 +100,7 @@ categoryMap categoryName = do
   pure $ SortedArray.fromFoldable intervalMaps
 
 type Almanac =
-  { seeds :: List Int
+  { seeds :: List BigInt
   , seedToSoil :: CategoryMap
   , soilToFertilizer :: CategoryMap
   , fertilizerToWater :: CategoryMap
@@ -128,7 +129,7 @@ almanac = do
   humidityToLocation <- categoryMap "humidity-to-location"
   pure { seeds: seeds', seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation }
 
-compareInterval :: Int -> IntervalMap -> Ordering
+compareInterval :: BigInt -> IntervalMap -> Ordering
 compareInterval x (IntervalMap { sourceStart, range }) =
   if x < sourceStart then
     LT
@@ -146,14 +147,14 @@ withDefault value maybe =
     Just x ->
       x
 
-translateId :: CategoryMap -> Int -> Int
+translateId :: CategoryMap -> BigInt -> BigInt
 translateId catMap id =
   SortedArray.findIndexWith (compareInterval id) catMap
     >>= (SortedArray.index catMap)
     <#> (\(IntervalMap { sourceStart, targetStart }) -> (id - sourceStart) + targetStart)
     # withDefault id
 
-seedToLocation :: Almanac -> Int -> Int
+seedToLocation :: Almanac -> BigInt -> BigInt
 seedToLocation { seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation } seedId =
   seedId
     # translateId seedToSoil
@@ -174,5 +175,5 @@ solution1 input =
       almanac'.seeds
         # map (seedToLocation almanac')
         # minimum
-        # withDefault 0
-        # Int.toStringAs Int.decimal
+        # withDefault (BigInt.fromInt 0)
+        # BigInt.toString
