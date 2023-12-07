@@ -29,3 +29,14 @@ spec =
         composeIntervalMap (<>) (makeI [ Interval 2 3 "b" ]) (makeI [ Interval 0 1 "a" ])
           `shouldEqual` (makeI [ Interval 0 1 "a", Interval 2 3 "b" ])
 
+      it "works for identical intervals" do
+        composeIntervalMap (<>) (makeI [ Interval 0 1 "a" ]) (makeI [ Interval 0 1 "b" ])
+          `shouldEqual` (makeI [ Interval 0 1 "ab" ])
+
+      it "works for overlapping intervals 1" do
+        composeIntervalMap (<>) (makeI [ Interval 0 1 "a" ]) (makeI [ Interval 1 2 "b" ])
+          `shouldEqual` (makeI [ Interval 0 0 "a", Interval 1 1 "ab", Interval 2 2 "b" ])
+
+      it "works for overlapping intervals 2" do
+        composeIntervalMap (<>) (makeI [ Interval 1 2 "b" ]) (makeI [ Interval 0 1 "a" ])
+          `shouldEqual` (makeI [ Interval 0 0 "a", Interval 1 1 "ba", Interval 2 2 "b" ])
