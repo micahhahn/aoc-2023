@@ -43,7 +43,11 @@ composeIntervalMap f (IntervalMap from') (IntervalMap to') =
     go from to accum =
       case from /\ to of
         (Interval fLeft fRight fVal : fromOthers) /\ (Interval tLeft tRight tVal : toOthers) ->
-          if fLeft < tLeft then
+          if fRight < tLeft then
+            go fromOthers to (Interval fLeft fRight fVal : accum)
+          else if fLeft > tRight then
+            go from toOthers (Interval tLeft tRight tVal : accum)
+          else if fLeft < tLeft then
             go (Interval tLeft fRight fVal : fromOthers) to (Interval fLeft (tLeft - one) fVal : accum)
           else if fLeft > tLeft then
             go from (Interval fLeft tRight tVal : toOthers) (Interval tLeft (fLeft - one) tVal : accum)

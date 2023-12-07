@@ -22,10 +22,10 @@ spec =
           `shouldEqual` (makeI [])
 
       it "works for disjoint intervals 2" do
-        composeIntervalMap (<>) (makeI [ Interval 0 1 "a" ]) (makeI [ Interval 1 2 "b" ])
-          `shouldEqual` (makeI [ Interval 0 1 "a", Interval 1 2 "b" ])
+        composeIntervalMap (<>) (makeI [ Interval 0 1 "a" ]) (makeI [ Interval 2 3 "b" ])
+          `shouldEqual` (makeI [ Interval 0 1 "a", Interval 2 3 "b" ])
 
       it "works for disjoint intervals 3" do
-        composeIntervalMap (<>) (makeI [ Interval 1 2 "b" ]) (makeI [ Interval 0 1 "a" ])
-          `shouldEqual` (makeI [ Interval 0 1 "a", Interval 1 2 "b" ])
+        composeIntervalMap (<>) (makeI [ Interval 2 3 "b" ]) (makeI [ Interval 0 1 "a" ])
+          `shouldEqual` (makeI [ Interval 0 1 "a", Interval 2 3 "b" ])
 
