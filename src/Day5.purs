@@ -20,7 +20,7 @@ import Data.Interval.Map (Boundary(..), Interval(..), LeftBoundary(..), Map(..),
 import Data.Interval.Map as Map
 import Data.List (List(..), (:))
 import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.SortedArray (SortedArray)
 import Data.SortedArray as SortedArray
@@ -204,15 +204,6 @@ almanac = do
   humidityToLocation <- categoryMap "humidity-to-location"
   pure { seeds: seeds', seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation }
 
-withDefault :: forall a. a -> Maybe a -> a
-withDefault value maybe =
-  case maybe of
-    Nothing ->
-      value
-
-    Just y ->
-      y
-
 mkSeedToLocation :: Almanac -> Map SeedId LocationId
 mkSeedToLocation { seedToSoil, soilToFertilizer, fertilizerToWater, waterToLight, lightToTemperature, temperatureToHumidity, humidityToLocation } =
   seedToSoil
@@ -237,7 +228,7 @@ solution1 input =
           # map (Map.lookup seedToLocation)
           # compact
           # minimum
-          # withDefault zero
+          # fromMaybe zero
           # unwrap
           # BigInt.toString
 
