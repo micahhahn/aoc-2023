@@ -162,9 +162,9 @@ interval = do
   sourceStart <- bigint
   _ <- space
   range <- bigint
-  let interval = Interval (LeftBoundary (wrap sourceStart) Closed) (RightBoundary (wrap (sourceStart + range - one)) Closed)
+  let i = Interval (LeftBoundary (wrap sourceStart) Closed) (RightBoundary (wrap (sourceStart + range - one)) Closed)
   let f = (unwrap >>> (+) (targetStart - sourceStart) >>> wrap) /\ (unwrap >>> (+) (sourceStart - targetStart) >>> wrap)
-  pure $ Piecewise interval f
+  pure $ Piecewise i f
 
 categoryMap :: forall k v. Newtype k BigInt => Newtype v BigInt => Ord k => String -> Parser String (Map k v)
 categoryMap categoryName = do
