@@ -10,7 +10,6 @@ import Day1 as Day1
 import Day2 as Day2
 import Day3 as Day3
 import Day4 as Day4
-import Day5 as Day5
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -20,6 +19,7 @@ import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
+import Test.Data.Interval.Map as TestInterval
 
 challenges :: Array Challenge
 challenges =
@@ -31,7 +31,6 @@ challenges =
   , Day3.challenge2
   , Day4.challenge1
   , Day4.challenge2
-  , Day5.challenge1
   ]
 
 main :: Effect Unit
@@ -57,3 +56,5 @@ main = launchAff_ $ runSpec [ consoleReporter ] do
 
       )
       challenges
+
+  TestInterval.spec

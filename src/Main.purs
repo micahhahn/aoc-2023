@@ -27,6 +27,7 @@ challenges =
   , Day4.challenge1
   , Day4.challenge2
   , Day5.challenge1
+  , Day5.challenge2
   ]
 
 main :: Effect (Unit)

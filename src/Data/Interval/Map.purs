@@ -1,157 +1,202 @@
 module Data.Interval.Map
-  ( compose
-  , invert
-  , inInterval
-  , lookup
-  , Map(..)
+  ( Boundary(..)
   , Interval(..)
+  , LeftBoundary(..)
+  , RightBoundary(..)
+  , Map(..)
+  , Piecewise(..)
   , Bijection
+  , inInterval
+  , whole
+  , compose
+  , lookup
+  , minBoundary
+  , maxBoundary
+  , mapIdentity
   ) where
 
 import Prelude
 
-import Data.List (List(..), (:))
-import Data.List as List
-import Data.Maybe (Maybe(..))
+import Data.Array as Array
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Newtype (class Newtype, unwrap)
+import Data.Ordering (invert)
 import Data.SortedArray (SortedArray)
 import Data.SortedArray as SortedArray
-import Data.Tuple (swap, fst, snd)
 import Data.Tuple.Nested ((/\), type (/\))
+
+data Boundary
+  = Closed
+  | Open
+
+derive instance Eq Boundary
+derive instance Ord Boundary
+
+data LeftBoundary k
+  = NegInf
+  | LeftBoundary k Boundary
+
+derive instance Eq k => Eq (LeftBoundary k)
+derive instance Ord k => Ord (LeftBoundary k)
+
+instance (Show k) => Show (LeftBoundary k) where
+  show NegInf = "(-∞"
+  show (LeftBoundary left Open) = "(" <> show left
+  show (LeftBoundary left Closed) = "[" <> show left
+
+derive instance Functor LeftBoundary
+
+data RightBoundary k
+  = RightBoundary k Boundary
+  | PosInf
+
+derive instance Eq k => Eq (RightBoundary k)
+instance Ord k => Ord (RightBoundary k) where
+  compare PosInf PosInf = EQ
+  compare PosInf _ = GT
+  compare _ PosInf = LT
+  compare (RightBoundary left leftBoundary) (RightBoundary right rightBoundary) =
+    compare left right <> (invert $ compare leftBoundary rightBoundary)
+
+instance (Show k) => Show (RightBoundary k) where
+  show (RightBoundary right Closed) = show right <> "]"
+  show (RightBoundary right Open) = show right <> ")"
+  show PosInf = "∞)"
+
+derive instance Functor RightBoundary
+
+data Interval k = Interval (LeftBoundary k) (RightBoundary k)
+
+derive instance Eq k => Eq (Interval k)
+derive instance Ord k => Ord (Interval k)
+
+instance (Show k) => Show (Interval k) where
+  show (Interval leftBoundary rightBoundary) =
+    show leftBoundary <> ", " <> show rightBoundary
+
+derive instance Functor Interval
 
 type Bijection a b = (a -> b) /\ (b -> a)
 
-data Interval k v = Interval (k /\ k) (Bijection k v)
+forward :: forall a b. Bijection a b -> (a -> b)
+forward (f /\ _) = f
 
-data Boundary
-  = Open
-  | Closed
-
-data Extended r
-  = NegInf
-  | Finite Boundary r
-  | PosInf
-
-data Map k v = Map (SortedArray (Interval k v)) (Bijection k v)
-
-instance Eq k => Eq (Interval k v) where
-  eq (Interval l _) (Interval r _) =
-    eq l r
-
-instance Ord k => Ord (Interval k v) where
-  compare (Interval l _) (Interval r _) =
-    compare l r
-
-instance (Show k, Show v) => Show (Interval k v) where
-  show (Interval (l /\ r) (f /\ _)) =
-    "[" <> show l <> ", " <> show r <> "] -> [" <> show (f l) <> ", " <> show (f r) <> "]"
-
-instance (Show k, Show v) => Show (Map k v) where
-  show (Map intervals _) =
-    show intervals
-
-inInterval :: forall k v. (Ord k) => k -> Interval k v -> Ordering
-inInterval k (Interval (l /\ r) _) =
-  if k < l then
-    LT
-  else if k > r then
-    GT
-  else
-    EQ
-
-withDefault :: forall a. a -> Maybe a -> a
-withDefault value maybe =
-  case maybe of
-    Nothing ->
-      value
-
-    Just y ->
-      y
-
-lookup :: forall k v. (Ord k) => Map k v -> k -> v
-lookup (Map intervals f) key =
-  SortedArray.findIndexWith (inInterval key) intervals
-    >>= (SortedArray.index intervals)
-    <#> (\(Interval _ f') -> forward f' key)
-    # withDefault (forward f key)
-
-invertInterval :: forall k v. Interval k v -> Interval v k
-invertInterval (Interval (l /\ r) (f /\ unF)) =
-  Interval (f l /\ f r) (unF /\ f)
-
-invert :: forall k v. (Ord v) => Map k v -> Map v k
-invert (Map intervals f) =
-  intervals
-    # SortedArray.map invertInterval
-    # SortedArray.fromFoldable
-    # \array -> Map array (swap f)
+backward :: forall a b. Bijection a b -> (b -> a)
+backward (_ /\ f) = f
 
 composeBijection :: forall a b c. Bijection a b -> Bijection b c -> Bijection a c
 composeBijection (fForward /\ fBackward) (gForward /\ gBackward) =
   fForward >>> gForward /\ gBackward >>> fBackward
 
-forward :: forall a b. Bijection a b -> (a -> b)
-forward = fst
+data Piecewise a b = Piecewise (Interval a) (Bijection a b)
 
-backward :: forall a b. Bijection a b -> (b -> a)
-backward = snd
+instance Eq a => Eq (Piecewise a b) where
+  eq (Piecewise leftI _) (Piecewise rightI _) =
+    eq leftI rightI
 
-compose :: forall a b c. Ord a => Ord b => Ring a => Ring b => Map a b -> Map b c -> Map a c
-compose ff@(Map _ f) gg@(Map gIntervals _) =
+instance Ord a => Ord (Piecewise a b) where
+  compare (Piecewise leftInterval _) (Piecewise rightInterval _) =
+    compare leftInterval rightInterval
+
+instance (Show a, Show b) => Show (Piecewise a b) where
+  show (Piecewise interval bijection) =
+    show interval <> " ==> " <> show (map (forward bijection) interval)
+
+newtype Map k v = Map (SortedArray (Piecewise k v))
+
+derive instance Newtype (Map k v) _
+
+minBoundary :: forall k v. Map k v -> LeftBoundary k
+minBoundary (Map pieces) =
+  case SortedArray.head pieces of
+    Nothing ->
+      NegInf
+    Just (Piecewise (Interval l _) _) ->
+      l
+
+maxBoundary :: forall k v. Map k v -> RightBoundary k
+maxBoundary (Map pieces) =
+  case SortedArray.head pieces of
+    Nothing ->
+      PosInf
+    Just (Piecewise (Interval _ r) _) ->
+      r
+
+-- | Tests if value `k` is contained in the interval. 
+-- |
+-- | Returns an `Ordering` so that it can be used in binary search
+inInterval :: forall k. (Ord k) => k -> Interval k -> Ordering
+inInterval k (Interval leftBoundary rightBoundary) =
+  if LeftBoundary k Open <= leftBoundary then
+    LT
+  else if RightBoundary k Open >= rightBoundary then
+    GT
+  else
+    EQ
+
+whole :: forall k. Interval k
+whole = Interval NegInf PosInf
+
+lookup :: forall k v. (Ord k) => Map k v -> k -> Maybe v
+lookup (Map piecewises) key =
+  SortedArray.findIndexWith (\(Piecewise interval _) -> inInterval key interval) piecewises
+    >>= (SortedArray.index piecewises)
+    <#> (\(Piecewise _ f') -> forward f' key)
+
+lookupLeft :: forall k v. (Ord k) => Map k v -> LeftBoundary k -> Int
+lookupLeft _ NegInf = 0
+lookupLeft (Map piecewises) (LeftBoundary key b) =
+  SortedArray.findIndexWith (\(Piecewise interval _) -> inInterval key interval) piecewises
+    # fromMaybe 0
+
+lookupRight :: forall k v. (Ord k) => Map k v -> RightBoundary k -> Int
+lookupRight (Map pieces) PosInf = SortedArray.length pieces - 1
+lookupRight (Map pieces) (RightBoundary key b) =
+  SortedArray.findIndexWith (\(Piecewise interval _) -> inInterval key interval) pieces
+    # fromMaybe (SortedArray.length pieces - 1)
+
+composeIntervalPiece :: forall a b c. Ord a => Ord b => Piecewise a b -> Piecewise b c -> Piecewise a c
+composeIntervalPiece f g =
   let
-    identityBijection = identity /\ identity
-
-    precompose =
-      SortedArray.map (\(Interval (l /\ r) _) -> Interval (backward f l /\ backward f r) identityBijection) gIntervals
-        # SortedArray.fromFoldable
-        # \array -> Map array identityBijection
-
-  in
-    (precompose `composeHelper` ff) `composeHelper` gg
-
---- [ (+1) ]
----  [      ]
-
----      [   ]
-
--- Use Enum for succ and prev? 
-
--- We need to project the f intervals forward (in order) and use binary search to locate them
-
-composeHelper :: forall a b c. Ord a => Ord b => Ring a => Ring b => Map a b -> Map b c -> Map a c
-composeHelper (Map fIntervals f) (Map gIntervals g) =
-  let
-    liftF (Interval i f') =
-      Interval i (composeBijection f' g)
-
-    liftG (Interval (l /\ r) g') =
-      Interval (backward f l /\ backward f r) (composeBijection f g')
-
-    go Nil todoG accum =
-      map liftG todoG <> accum
-
-    go todoF Nil accum =
-      map liftF todoF <> accum
-
-    go
-      todoF@(fInterval@(Interval (fLeft /\ fRight) f') : fOthers)
-      todoG@(gInterval@(Interval (gLeft /\ gRight) g') : gOthers)
-      accum =
-      if forward f' fRight < gLeft then
-        go fOthers todoG (liftF fInterval : accum)
-      else if forward f' fLeft > gRight then
-        go todoF gOthers (liftG gInterval : accum)
-      else if forward f' fLeft < gLeft then
-        go (Interval (backward f' gLeft /\ fRight) f' : fOthers) todoG (Interval (fLeft /\ backward f' (gLeft - one)) (composeBijection f' g) : accum)
-      else if forward f' fLeft > gLeft then
-        go todoF (Interval (forward f' fLeft /\ gRight) g' : gOthers) (Interval (backward f gLeft /\ (fLeft - one)) (composeBijection f g') : accum)
-      else if forward f' fRight > gRight then
-        go (Interval (backward f' (gRight + one) /\ fRight) f' : fOthers) gOthers (Interval (fLeft /\ (backward f' gRight)) (composeBijection f' g') : accum)
-      else if forward f' fRight < gRight then
-        go fOthers (Interval (forward f' (fRight + one) /\ gRight) g' : gOthers) (Interval (fLeft /\ fRight) (composeBijection f' g') : accum)
+    (Piecewise (Interval fLeft fRight) fBijection) = f
+    (Piecewise (Interval gLeft gRight) gBijection) = g
+    fLeft' =
+      if map (forward fBijection) fLeft < gLeft then
+        map (backward fBijection) gLeft
       else
-        go fOthers gOthers (Interval (fLeft /\ fRight) (composeBijection f' g') : accum)
+        fLeft
+
+    fRight' =
+      if map (forward fBijection) fRight > gRight then
+        map (backward fBijection) gRight
+      else
+        fRight
+  in
+    (Piecewise (Interval fLeft' fRight') (composeBijection fBijection gBijection))
+
+composeInterval :: forall a b c. Ord a => Ord b => Piecewise a b -> Map b c -> Map a c
+composeInterval piece@(Piecewise (Interval leftBoundary rightBoundary) bijection) gPieces =
+  let
+    newLeftBoundary = map (forward bijection) leftBoundary
+    newRightBounday = map (forward bijection) rightBoundary
 
   in
-    go (List.fromFoldable fIntervals) (List.fromFoldable gIntervals) Nil
+    SortedArray.slice
+      (lookupLeft gPieces newLeftBoundary)
+      (lookupRight gPieces newRightBounday)
+      (unwrap gPieces)
+      # SortedArray.map (composeIntervalPiece piece)
       # SortedArray.fromFoldable
-      # \array -> Map array (composeBijection f g)
+      # Map
+
+compose :: forall a b c. Ord a => Ord b => Map a b -> Map b c -> Map a c
+compose f g =
+  unwrap f
+    # SortedArray.unSortedArray
+    # Array.concatMap (\p -> composeInterval p g # unwrap # SortedArray.unSortedArray)
+    # SortedArray.fromFoldable
+    # Map
+
+mapIdentity :: forall a. Ord a => Map a a
+mapIdentity =
+  Map $ SortedArray.singleton $ Piecewise whole (identity /\ identity)

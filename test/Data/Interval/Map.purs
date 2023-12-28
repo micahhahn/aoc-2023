@@ -2,61 +2,104 @@ module Test.Data.Interval.Map
   ( spec
   ) where
 
-import Data.Interval.Map (Interval(..), Bijection, Map(..), compose)
+import Data.Interval.Map
 import Prelude
-import Test.Spec (describe, it, Spec)
-import Test.Spec.Assertions (shouldEqual)
-import Data.Tuple.Nested ((/\), type (/\))
+
+import Control.Monad.Error.Class (class MonadThrow, throwError)
+import Data.Enum (enumFromTo, class Enum, succ, pred)
+import Data.Maybe (fromMaybe)
 import Data.SortedArray as SortedArray
+import Data.Traversable (traverse_)
+import Data.Tuple.Nested ((/\))
+import Effect.Exception (Error, error)
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (expectError, shouldEqual)
 
-makeI :: Array (Interval Int Int) -> Map Int Int
-makeI array =
-  SortedArray.fromFoldable array
-    # (\a -> Map a (identity /\ identity))
+fail :: forall m v. MonadThrow Error m => String -> m v
+fail = throwError <<< error
 
-makeB :: Int -> Bijection Int Int
-makeB x = (\y -> y + x) /\ (\y -> y - x)
+normalizeLeft :: forall k m. MonadThrow Error m => Enum k => Show k => LeftBoundary k -> m k
+normalizeLeft negInf@NegInf = fail $ "Unexpected " <> show negInf
+normalizeLeft (LeftBoundary k Closed) = pure k
+normalizeLeft (LeftBoundary k Open) = pure $ fromMaybe k (succ k)
 
-norm :: Map Int Int -> Array ((Int /\ Int) /\ Int)
-norm (Map intervals _) =
-  SortedArray.map (\(Interval r (f /\ _)) -> r /\ f zero) intervals
+normalizeRight :: forall k m. MonadThrow Error m => Enum k => Show k => RightBoundary k -> m k
+normalizeRight posInf@PosInf = fail $ "Unexpected " <> show posInf
+normalizeRight (RightBoundary k Closed) = pure k
+normalizeRight (RightBoundary k Open) = pure $ fromMaybe k (pred k)
+
+-- | A specialized kind of equality for testing Maps given the following conditions:
+-- | - Both maps are finite
+-- | - The key type is enumerable between the boundaries
+mapShouldEqual :: forall m k v. MonadThrow Error m => Enum k => Eq v => Show k => Show v => Map k v -> Map k v -> m Unit
+mapShouldEqual map1 map2 = do
+  left <- normalizeLeft $ min (minBoundary map1) (minBoundary map2)
+  right <- normalizeRight $ max (maxBoundary map1) (maxBoundary map2)
+  traverse_
+    ( \input ->
+        let
+          output1 = lookup map1 input
+          output2 = lookup map2 input
+        in
+          when (output1 /= output2) $ fail $ "At " <> show input <> ": " <> show output1 <> " ≠ " <> show output2
+    )
+    (enumFromTo left right :: Array k)
 
 spec :: Spec Unit
 spec =
-  describe "Data.Interval.Map" do
-    describe "compose" do
-      it "works for disjoint intervals 1" do
-        compose (makeI []) (makeI [])
-          # norm
-          # shouldEqual (norm $ makeI [])
+  describe "Data.Interval.Map2" do
+    describe "inInterval" do
+      it "everything is in the whole range" do
+        inInterval 0 whole
+          # shouldEqual EQ
 
-      it "works for disjoint intervals 2" do
-        compose (makeI [ Interval (0 /\ 1) (makeB 1) ]) (makeI [ Interval (3 /\ 4) (makeB 2) ])
-          # norm
-          # shouldEqual (norm $ makeI [ Interval (0 /\ 1) (makeB 1), Interval (3 /\ 4) (makeB 2) ])
+      it "left open range" do
+        inInterval 0 (Interval (LeftBoundary 0 Open) PosInf)
+          # shouldEqual LT
 
-      it "works for disjoint intervals 3" do
-        compose (makeI [ Interval (3 /\ 4) (makeB 2) ]) (makeI [ Interval (0 /\ 1) (makeB 1) ])
-          # norm
-          # shouldEqual (norm $ makeI [ Interval (0 /\ 1) (makeB 1), Interval (3 /\ 4) (makeB 2) ])
+      it "left closed range" do
+        inInterval 0 (Interval (LeftBoundary 0 Closed) PosInf)
+          # shouldEqual EQ
 
-      it "works for identical intervals" do
-        compose (makeI [ Interval (0 /\ 1) (makeB 1) ]) (makeI [ Interval (1 /\ 2) (makeB 1) ])
-          # norm
-          # shouldEqual (norm $ makeI [ Interval (0 /\ 0) (makeB 2), Interval (1 /\ 1) (makeB 2), Interval (2 /\ 2) (makeB 1) ])
+      it "right open range" do
+        inInterval 1 (Interval NegInf (RightBoundary 1 Open))
+          # shouldEqual GT
 
-      it "works for overlapping intervals 1" do
-        compose (makeI [ Interval (0 /\ 1) (makeB 1) ]) (makeI [ Interval (2 /\ 3) (makeB 2) ])
-          # norm
-          # shouldEqual
-              ( norm $ makeI
-                  [ Interval (0 /\ 0) (makeB 1)
-                  , Interval (1 /\ 1) (makeB 3)
-                  , Interval (2 /\ 3) (makeB 2)
-                  ]
-              )
+      it "right closed range" do
+        inInterval 1 (Interval NegInf (RightBoundary 1 Closed))
+          # shouldEqual EQ
 
-      it "works for overlapping intervals 2" do
-        compose (makeI [ Interval (1 /\ 2) (makeB (-1)) ]) (makeI [ Interval (0 /\ 1) (makeB 1) ])
-          # norm
-          # shouldEqual (norm $ makeI [ Interval (0 /\ 0) (makeB 1), Interval (1 /\ 2) (makeB 0) ])
+    describe "mapShouldEqual" do
+      it "should pass for simple maps" do
+        let map = Map (SortedArray.singleton (Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) ((_ + 1) /\ (_ - 1))))
+        map `mapShouldEqual` map
+
+      it "should pass for disjoint maps" do
+        let bijection = (_ + 1) /\ (_ - 1)
+
+        let
+          disjointPieces =
+            [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 2 Open)) bijection
+            , Piecewise (Interval (LeftBoundary 2 Closed) (RightBoundary 3 Closed)) bijection
+            ]
+
+        let
+          pieces =
+            [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) bijection ]
+
+        Map (SortedArray.fromFoldable disjointPieces)
+          `mapShouldEqual` Map (SortedArray.fromFoldable pieces)
+
+      it "should fail for mismatched intervals (1)" do
+        let bijection = (_ + 1) /\ (_ - 1)
+        let pieces1 = [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 2 Open)) bijection ]
+        let pieces2 = [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 2 Closed)) bijection ]
+        Map (SortedArray.fromFoldable pieces1) `mapShouldEqual` Map (SortedArray.fromFoldable pieces2)
+          # expectError
+
+      it "should fail for mismatched intervals (2)" do
+        let bijection = (_ + 1) /\ (_ - 1)
+        let pieces1 = [ Piecewise (Interval (LeftBoundary 1 Open) (RightBoundary 2 Closed)) bijection ]
+        let pieces2 = [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 2 Closed)) bijection ]
+        Map (SortedArray.fromFoldable pieces1) `mapShouldEqual` Map (SortedArray.fromFoldable pieces2)
+          # expectError
