@@ -113,8 +113,30 @@ spec =
         let mapG = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 2 Closed) (RightBoundary 4 Closed)) funcG ]
         let funcExpected = (_ + 3) /\ (_ - 3)
         let mapExpected = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) funcExpected ]
-        let (Map composed) = mapF `Map.compose` mapG
-        SortedArray.head composed
-          # map (\(Piecewise interval _) -> interval)
-          # shouldEqual (Just $ Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed))
-        -- composed `mapShouldEqual` mapExpected
+        (mapF `Map.compose` mapG) `mapShouldEqual` mapExpected
+
+      it "should handle split intervals (1)" do 
+        let funcF = (_ + 1) /\ (_ - 1)
+        let mapF = Map $ SortedArray.fromFoldable $ 
+                    [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 1 Closed)) funcF
+                    , Piecewise (Interval (LeftBoundary 2 Closed) (RightBoundary 2 Closed)) funcF
+                    , Piecewise (Interval (LeftBoundary 3 Closed) (RightBoundary 3 Closed)) funcF  
+                    ]
+        let funcG = (_ + 2) /\ (_ - 2)
+        let mapG = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 2 Closed) (RightBoundary 4 Closed)) funcG ]
+        let funcExpected = (_ + 3) /\ (_ - 3)
+        let mapExpected = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) funcExpected ]
+        (mapF `Map.compose` mapG) `mapShouldEqual` mapExpected
+
+      it "should handle split intervals (2)" do 
+        let funcF = (_ + 1) /\ (_ - 1)
+        let mapF = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) funcF ]
+        let funcG = (_ + 2) /\ (_ - 2)
+        let mapG = Map $ SortedArray.fromFoldable $ 
+                    [ Piecewise (Interval (LeftBoundary 2 Closed) (RightBoundary 2 Closed)) funcG
+                    , Piecewise (Interval (LeftBoundary 3 Closed) (RightBoundary 3 Closed)) funcG
+                    , Piecewise (Interval (LeftBoundary 4 Closed) (RightBoundary 4 Closed)) funcG 
+                    ]
+        let funcExpected = (_ + 3) /\ (_ - 3)
+        let mapExpected = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) funcExpected ]
+        (mapF `Map.compose` mapG) `mapShouldEqual` mapExpected
