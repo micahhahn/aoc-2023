@@ -3,6 +3,7 @@ module Test.Data.Interval.Map
   ) where
 
 import Data.Interval.Map
+import Data.Interval.Map as Map
 import Prelude
 
 import Control.Monad.Error.Class (class MonadThrow, throwError)
@@ -47,7 +48,7 @@ mapShouldEqual map1 map2 = do
 
 spec :: Spec Unit
 spec =
-  describe "Data.Interval.Map2" do
+  describe "Data.Interval.Map" do
     describe "inInterval" do
       it "everything is in the whole range" do
         inInterval 0 whole
@@ -103,3 +104,17 @@ spec =
         let pieces2 = [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 2 Closed)) bijection ]
         Map (SortedArray.fromFoldable pieces1) `mapShouldEqual` Map (SortedArray.fromFoldable pieces2)
           # expectError
+    
+    describe "compose" do 
+      it "should handle identical intervals" do 
+        let funcF = (_ + 1) /\ (_ - 1)
+        let mapF = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) funcF ]
+        let funcG = (_ + 2) /\ (_ - 2)
+        let mapG = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 2 Closed) (RightBoundary 4 Closed)) funcG ]
+        let funcExpected = (_ + 3) /\ (_ - 3)
+        let mapExpected = Map $ SortedArray.fromFoldable $ [ Piecewise (Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed)) funcExpected ]
+        let (Map composed) = mapF `Map.compose` mapG
+        SortedArray.head composed
+          # map (\(Piecewise interval _) -> interval)
+          # shouldEqual (Just $ Interval (LeftBoundary 1 Closed) (RightBoundary 3 Closed))
+        -- composed `mapShouldEqual` mapExpected

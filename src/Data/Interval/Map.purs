@@ -106,6 +106,9 @@ newtype Map k v = Map (SortedArray (Piecewise k v))
 
 derive instance Newtype (Map k v) _
 
+instance (Show k, Show v) => Show (Map k v) where
+  show (Map pieces) = show pieces
+
 minBoundary :: forall k v. Map k v -> LeftBoundary k
 minBoundary (Map pieces) =
   case SortedArray.head pieces of
@@ -183,7 +186,7 @@ composeInterval piece@(Piecewise (Interval leftBoundary rightBoundary) bijection
   in
     SortedArray.slice
       (lookupLeft gPieces newLeftBoundary)
-      (lookupRight gPieces newRightBounday)
+      (lookupRight gPieces newRightBounday + 1)
       (unwrap gPieces)
       # SortedArray.map (composeIntervalPiece piece)
       # SortedArray.fromFoldable
